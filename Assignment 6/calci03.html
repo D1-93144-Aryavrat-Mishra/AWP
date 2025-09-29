@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Basic Calculator</title>
+  <style>
+    /* center the calculator vertically & horizontally */
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f2f6fb;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    /* card around table */
+    .card {
+      background: #ffffff;
+      padding: 18px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    table {
+      border-collapse: collapse;
+      min-width: 360px;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0 0 8px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 14px;
+      margin: 0 0 14px;
+      text-align: center;
+      color: #555;
+      font-weight: normal;
+    }
+
+    td {
+      padding: 8px;
+    }
+
+    label {
+      display: inline-block;
+      font-size: 14px;
+      color: #333;
+      width: 100%;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cfd8e3;
+      border-radius: 6px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    input[readonly] {
+      background: #eef2f8;
+      color: #222;
+    }
+
+    /* buttons layout & style */
+    .ops-btn {
+      width: 100%;
+      padding: 10px 6px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #bfcbdc;
+      background: #ffffff;
+      cursor: pointer; /* pointer on hover as required */
+      transition: background 0.12s, transform 0.06s;
+    }
+    .ops-btn:hover { transform: translateY(-1px); }
+
+    .ops-btn.op { background: #dfefff; }
+    .ops-btn.equal { background: #d1f0d9; font-weight: 600; }
+    .ops-btn.clear { background: #ffdede; }
+
+    /* make sure buttons show pointer when hovered (explicit) */
+    .ops-btn:hover { cursor: pointer; }
+
+    /* small responsiveness */
+    @media (max-width: 420px) {
+      table { min-width: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="application" aria-label="Basic calculator">
+    <h1>Basic Calculator</h1>
+    <h2>Perform addition, subtraction, multiplication & division</h2>
+
+    <table role="presentation" align="center" border="0">
+      <tbody>
+        <tr>
+          <td colspan="2">
+            <label for="num1">Number 1</label>
+            <input type="text" id="num1" inputmode="decimal" aria-label="First number"
+                   placeholder="Enter first number"
+                   oninput="filterNumber(this)" />
+          </td>
+          <td colspan="2">
+            <label for="num2">Number 2</label>
+            <input type="text" id="num2" inputmode="decimal" aria-label="Second number"
+                   placeholder="Enter second number"
+                   oninput="filterNumber(this)" />
+          </td>
+        </tr>
+
+        <tr>
+          <td colspan="4">
+            <label for="result">Result</label>
+            <input type="text" id="result" readonly aria-readonly="true" />
+          </td>
+        </tr>
+
+        <tr>
+          <td><button type="button" class="ops-btn op" onclick="calculate('+')">Addition (+)</button></td>
+          <td><button type="button" class="ops-btn op" onclick="calculate('-')">Subtraction (-)</button></td>
+          <td><button type="button" class="ops-btn op" onclick="calculate('*')">Multiply (×)</button></td>
+          <td><button type="button" class="ops-btn op" onclick="calculate('/')">Divide (÷)</button></td>
+        </tr>
+
+        <tr>
+          <td colspan="2"><button type="button" class="ops-btn equal" onclick="calculate('=')">Evaluate Expression</button></td>
+          <td colspan="2"><button type="button" class="ops-btn clear" onclick="clearAll()">Clear</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Allow only: digits, one decimal point, optional single leading minus.
+    // Called as oninput for each numeric input.
+    function filterNumber(el) {
+      let s = el.value;
+      // remove any character not digit, dot or minus
+      s = s.replace(/[^\d.-]/g, '');
+      // ensure only one dot
+      const parts = s.split('.');
+      if (parts.length > 2) {
+        s = parts.shift() + '.' + parts.join('');
+      }
+      // ensure only one leading minus and it's at start
+      s = s.replace(/(?!^)-/g, ''); // remove any minus not at start
+      if (s.indexOf('-') > 0) {
+        s = s.replace('-', '');
+        s = '-' + s;
+      }
+      // if there are multiple leading zeros like "00" keep them as user typed, parseFloat will handle.
+      el.value = s;
+    }
+
+    function getNums() {
+      const a = document.getElementById('num1').value.trim();
+      const b = document.getElementById('num2').value.trim();
+      if (a === '' || b === '') {
+        alert('Please enter both numbers.');
+        return null;
+      }
+      const n1 = parseFloat(a);
+      const n2 = parseFloat(b);
+      if (Number.isNaN(n1) || Number.isNaN(n2)) {
+        alert('Please enter valid numbers.');
+        return null;
+      }
+      return { n1, n2 };
+    }
+
+    function calculate(op) {
+      // If user clicked "Evaluate Expression" (=), build expression from the two inputs and show evaluation
+      if (op === '=') {
+        const vals = getNums();
+        if (!vals) return;
+        // build a simple expression (here we do n1 op n2 as addition by default)
+        // For "=" we simply show n1 + n2 result for convenience; user can use the explicit op buttons too.
+        document.getElementById('result').value = (vals.n1 + vals.n2);
+        return;
+      }
+
+      const nums = getNums();
+      if (!nums) return;
+      let res;
+      switch (op) {
+        case '+': res = nums.n1 + nums.n2; break;
+        case '-': res = nums.n1 - nums.n2; break;
+        case '*': res = nums.n1 * nums.n2; break;
+        case '/':
+          if (nums.n2 === 0) {
+            alert('Division by zero is not allowed.');
+            return;
+          }
+          res = nums.n1 / nums.n2;
+          break;
+        default:
+          alert('Unknown operation');
+          return;
+      }
+      // trim long float representation
+      if (Number.isFinite(res)) {
+        // show up to 10 decimal places (remove trailing zeros)
+        document.getElementById('result').value = parseFloat(res.toFixed(10)).toString();
+      } else {
+        document.getElementById('result').value = String(res);
+      }
+    }
+
+    function clearAll() {
+      document.getElementById('num1').value = '';
+      document.getElementById('num2').value = '';
+      document.getElementById('result').value = '';
+      document.getElementById('num1').focus();
+    }
+  </script>
+</body>
+</html>
